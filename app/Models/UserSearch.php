@@ -10,6 +10,15 @@ class UserSearch extends Model
 {
     use HasFactory;
     /**
+     * @param $query
+     * @return mixed
+     */
+    public function scopeCurrentUser($query)
+    {
+        return $query->where('user_id', Auth::user()->id);
+    }
+
+    /**
      * Set the user_id.
      *
      * @return void
