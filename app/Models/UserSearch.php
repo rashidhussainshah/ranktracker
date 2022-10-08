@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Auth;
 class UserSearch extends Model
 {
     use HasFactory;
+
+    public const STATUS_COMPLETE = 'complete';
+
     /**
      * @param $query
      * @return mixed

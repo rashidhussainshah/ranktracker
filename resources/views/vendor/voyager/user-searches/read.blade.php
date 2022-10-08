@@ -50,24 +50,6 @@
                 </div>
             </div>
         </div>
-        {{--        </div>--}}
-        {{--        <div class="row">--}}
-        <div class="col-lg-12 col-xl-6">
-            <!--Table bordered-->
-            <div id="panel-3" class="panel">
-                <div class="panel-hdr">
-                    <h2>
-                        Rank <span class="fw-300"><i>Volatility</i></span>&nbsp; Box Plot
-                    </h2>
-
-                </div>
-                <div class="panel-container show">
-                    <div class="panel-content">
-                        <canvas id="boxChart" width="600" height="600"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Table -->
@@ -90,7 +72,6 @@
                                 <th>Keyword</th>
                                 <th>Description</th>
                                 <th>Website</th>
-                                <th>Rank</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -111,7 +92,6 @@
                                         <a target="_blank" href="{{$search['url']}}">{{$search['url']}}</a><br>
 
                                     </td>
-                                    <td style=" width: 20%; word-wrap: break-word;min-width: 160px;max-width: 160px;">{{implode('|', $search['ranks'])}}</td>
                                 </tr>
 
                             @endforeach
@@ -411,49 +391,11 @@
                     },
                 },
                 scales: {
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        stacked: false,
-                        reverse: true,
-                        beginAtZero: false,
-                        ticks : {
-                            min: 1,
-                            max: 100,
-                            stepSize : 5,
 
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            min : 0,
-                            beginAtZero: true
-                        }
-                    }
                 }
             },
         };
         window.onload = () => {
-            const ctx = document.getElementById("boxChart").getContext("2d");
-            window.myBar = new Chart(ctx, {
-                type: 'boxplot',
-                data: boxplotData,
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    legend: {
-                        display: false
-                    },
-                    scales: {
-                        yAxis: {
-                            display: false,
-                        }
-                    }
-                },
-            });
-
-
             const speedCanvas = document.getElementById("rankChart");
 
             window.lineChart = new Chart(speedCanvas, config);

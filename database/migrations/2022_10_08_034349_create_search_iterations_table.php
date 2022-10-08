@@ -17,7 +17,7 @@ class CreateSearchIterationsTable extends Migration
             $table->id();
             $table->foreignId('user_search_id')->nullable()->constrained()->onDelete('cascade');
             $table->json('search_results')->nullable();
-            $table->string('task_id');
+            $table->string('iteration')->default(1);
             $table->timestamps();
         });
     }

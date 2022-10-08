@@ -2,24 +2,20 @@
 
 namespace App\Jobs;
 
+use App\Models\SearchIteration;
 use App\Models\UserSearch;
 use App\Services\DataForSEO;
-use App\Services\KeywordSearchResult;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class UserSearchRepetation implements ShouldQueue, ShouldBeUnique
+class UserSearchRepetation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * @var UserSearch
-     */
     private $userSearch;
 
     /**
@@ -27,7 +23,7 @@ class UserSearchRepetation implements ShouldQueue, ShouldBeUnique
      *
      * @return void
      */
-    public function __construct(UserSearch $userSearch)
+    public function __construct($userSearch)
     {
         $this->userSearch = $userSearch;
     }
@@ -37,15 +33,27 @@ class UserSearchRepetation implements ShouldQueue, ShouldBeUnique
      *
      * @return void
      */
-    public function handle(KeywordSearchResult $keywordSearchResult)
+    public function handle(DataForSEO $dfseo)
     {
-        $keywordSearchResult->getSaveSearchResults($this->report);
-//        Log::info(json_encode($this->data));
-//        $dfseo = new DataForSEO();
-//        if (isset($this->data['search_repetitions'])) {
-//            for ($i = 1; $i <= $this->data['search_repetitions']; $i++) {
-//                $apiResponse = $dfseo->searchKeywords($this->data['location_name'], $this->data['keyword']);
-//            }
-//        }
+        try {
+            if (isset($this->userSearch->search_repetitions)) {
+                for ($i = 1; $i <= $this->userSearch->search_repetitions; $i++) {
+                    $apiResponse = $dfseo->searchKeywords($this->userSearch->keyword,$this->userSearch->country);
+                    if($apiResponse->status_code == 20000 && $apiResponse->tasks_error == 0){
+                        $si = new SearchIteration();
+                        $si->user_search_id = $this->userSearch->id;
+                        $si->search_results = json_encode($apiResponse);
+                        $si->iteration = $i;
+                        $si->save();
+                    }
+                }
+                $this->userSearch->status = UserSearch::STATUS_COMPLETE;
+                $this->userSearch->save();
+                Log::info('inside handle');
+            }
+        } catch (\Exception $exception) {
+            Log::info('UserSearchRepetation hande method');
+            Log::info($exception->getMessage());
+        }
     }
 }

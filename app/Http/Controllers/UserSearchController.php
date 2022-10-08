@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\UserSearchRepetation;
+use App\Models\SearchIteration;
 use App\Models\UserSearch;
 use App\Models\UserSearchKeyword;
 use App\Services\DataForSEO;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use TCG\Voyager\Events\BreadDataAdded;
 use TCG\Voyager\Facades\Voyager;
 use TCG\Voyager\Http\Controllers\VoyagerBaseController;
@@ -38,12 +40,10 @@ class UserSearchController extends VoyagerBaseController
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         event(new BreadDataAdded($dataType, $data));
-        $prepareData['id'] = $data->id;
-        $prepareData['search_repetitions'] = (int)$data->search_repetitions;
-        $prepareData['user_id'] = auth()->user()->id;
-        $prepareData['location_name'] = $request->country;
-        $prepareData['keyword'] = $request->keyword;
-//        dispatch(new UserSearchRepetation($prepareData));
+        // with queue
+//        dispatch(new UserSearchRepetation($data));
+        // without queue
+        $this->saveUserSearchApiRes($data);
 
 
         if (!$request->has('_tagging')) {
@@ -123,7 +123,7 @@ class UserSearchController extends VoyagerBaseController
             $view = "voyager::$slug.read";
         }
         //
-        $us = UserSearch::first();
+        $us = UserSearch::find($dataTypeContent->id);
         $iterations = $us->searchIterations()->orderBy('updated_at', 'desc')->get();
         $data = [];
         $count = [];
@@ -138,7 +138,7 @@ class UserSearchController extends VoyagerBaseController
 //                $items = $searchResults['result'][0]['items'];
                 $data = array_merge($data, $items);
 
-                $count[] = "IT-" . ($index + 1) . "-" . Carbon::createFromFormat('Y-m-d H:i:s', $iteration->updated_at)->format('Y/m/d H:i:s');
+                $count[] =  $iteration->iteration;
 
             }
         }
@@ -180,13 +180,12 @@ class UserSearchController extends VoyagerBaseController
                         if ($item['type'] != 'organic')
                             continue;
                         $data['data'][] = [
-                            'x' => "IT-" . ($index + 1) . "-" . Carbon::createFromFormat('Y-m-d H:i:s', $iteration->updated_at)->format('Y/m/d H:i:s'),
+                            'x' =>  $iteration->iteration,
                             'y' => $item['rank_group']
                         ];
                         $rank[] = $item['rank_group'];
 //                        $tableData[$site]['url'][] = $item['url'];
                     }
-                    $tableData[$site]['ranks'][] = implode(',', $rank);
                 }
             }
             $graphData[] = $data;
@@ -217,6 +216,31 @@ class UserSearchController extends VoyagerBaseController
         });
 
         return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'isSoftDeleted'))->with(['id' => $us->id, 'graphData' => ['labels' => $count, 'datasets' => $graphData], 'tableData' => $tableData, 'total' => $total, 'completed' => $completed, 'boxpot_data' => $boxplot_data, 'boxpot_data_labels' => $boxplot_data_label, 'boxplot_cj_data'=>$boxplot_cj_data_arr]);;
+    }
+
+    private function saveUserSearchApiRes($userSearch)
+    {
+        try {
+            $dfseo = new DataForSEO();
+            if (isset($userSearch->search_repetitions)) {
+                for ($i = 1; $i <= $userSearch->search_repetitions; $i++) {
+                    $apiResponse = $dfseo->searchKeywords($userSearch->keyword,$userSearch->country);
+                    if($apiResponse->status_code == 20000 && $apiResponse->tasks_error == 0){
+                        $si = new SearchIteration();
+                        $si->user_search_id = $userSearch->id;
+                        $si->search_results = json_encode($apiResponse);
+                        $si->iteration = $i;
+                        $si->save();
+                    }
+                }
+                $userSearch->status = UserSearch::STATUS_COMPLETE;
+                $userSearch->save();
+                Log::info('inside handle');
+            }
+        } catch (\Exception $exception) {
+            Log::info('UserSearchRepetation hande method');
+            Log::info($exception->getMessage());
+        }
     }
 
 }
