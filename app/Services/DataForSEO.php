@@ -2,18 +2,24 @@
 
 namespace App\Services;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Log;
 
 class DataForSEO extends BaseDFSO
 {
+    /**
+     * @return void
+     */
     public function authentication()
     {
 
     }
 
-    public function searchKeywords($keyword, $country)
+    /**
+     * @param string $keyword
+     * @param string $country
+     * @return mixed|void
+     */
+    public function searchKeywords(string $keyword, string $country)
     {
         try {
             $this->setBody(

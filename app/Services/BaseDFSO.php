@@ -6,7 +6,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Support\Facades\Log;
 
 class BaseDFSO
 {
@@ -32,6 +31,9 @@ class BaseDFSO
      */
     protected $version;
 
+    /**
+     *
+     */
     public function __construct()
     {
         $this->baseUrl = (config('dataforseo.mod') == 'sandbox') ? config('dataforseo.sandbox_host') : config('dataforseo.live_host');
@@ -51,7 +53,11 @@ class BaseDFSO
         $this->body = $body;
     }
 
-    public function postReq($endPoint)
+    /**
+     * @param string $endPoint
+     * @return mixed
+     */
+    public function postReq(string $endPoint)
     {
         $request = new Request('POST', $this->baseUrl.'/'.$this->version.'/'.$endPoint, $this->headers, $this->body);
         $res = $this->client->sendAsync($request)->wait();
