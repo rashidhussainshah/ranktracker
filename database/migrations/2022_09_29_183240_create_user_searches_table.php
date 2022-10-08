@@ -17,7 +17,8 @@ class CreateUserSearchesTable extends Migration
             $table->id();
             $table->foreignId('user_id');
             $table->text('keyword');
-            $table->text('country');
+            $table->string('country');
+            $table->enum('status', ['processing','complete','error']);
             $table->enum('device', ['desktop', 'mobile'])->default('desktop');
             $table->integer('search_repetitions')->default(0)->comment('how many times will the search be repeated');
             $table->timestamps();
