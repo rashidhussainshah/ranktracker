@@ -1,9 +1,5 @@
 <?php
 
-use App\Models\SearchIteration;
-use App\Services\DataForSEO;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,8 +13,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('/', function () {
+    return view('welcome');
+});
 
-//Route::permanentRedirect('/', 'admin/login');
 
 Route::group(['prefix' => 'admin'], function () {
     Voyager::routes();
