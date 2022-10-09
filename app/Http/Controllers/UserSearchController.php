@@ -46,7 +46,7 @@ class UserSearchController extends VoyagerBaseController
 
         event(new BreadDataAdded($dataType, $data));
         // save DataForSEO results
-        if ((config('dataforseo.ENABLE_QUEUE') == 'yes')) {
+        if ((config('dataforseo.enable_queue') == 'yes')) {
             dispatch(new UserSearchRepetition($data));
         } else {
             $this->saveUserSearchApiRes($data);
