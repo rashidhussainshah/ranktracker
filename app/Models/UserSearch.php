@@ -14,6 +14,8 @@ class UserSearch extends Model
     public const STATUS_COMPLETE = 'complete';
 
     /**
+     * Add this scope into user bread
+     * because we need to show user own searches
      * @param $query
      * @return mixed
      */
@@ -23,8 +25,8 @@ class UserSearch extends Model
     }
 
     /**
-     * Set the user_id.
-     *
+     * Set the user_id because we need
+     * to show user own searches.
      * @return void
      */
     public function setUserIdAttribute()
@@ -33,7 +35,6 @@ class UserSearch extends Model
     }
 
     /**
-     *
      * @return HasMany
      **/
     public function searchIterations(): HasMany

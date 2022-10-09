@@ -8,6 +8,12 @@ use Illuminate\Support\Facades\Log;
 
 class DataForSEO extends BaseDFSO
 {
+    /**
+     * Search Keyword API Request
+     * @param $keyword
+     * @param $country
+     * @return mixed|void
+     */
     public function searchKeywords($keyword, $country)
     {
         try {

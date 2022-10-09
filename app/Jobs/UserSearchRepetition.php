@@ -38,8 +38,8 @@ class UserSearchRepetition implements ShouldQueue
         try {
             if (isset($this->userSearch->search_repetitions)) {
                 for ($i = 1; $i <= $this->userSearch->search_repetitions; $i++) {
-                    $apiResponse = $dfseo->searchKeywords($this->userSearch->keyword,$this->userSearch->country);
-                    if($apiResponse->status_code == 20000 && $apiResponse->tasks_error == 0){
+                    $apiResponse = $dfseo->searchKeywords($this->userSearch->keyword, $this->userSearch->country);
+                    if ($apiResponse->status_code == 20000 && $apiResponse->tasks_error == 0) {
                         $si = new SearchIteration();
                         $si->user_search_id = $this->userSearch->id;
                         $si->search_results = json_encode($apiResponse);
@@ -49,10 +49,8 @@ class UserSearchRepetition implements ShouldQueue
                 }
                 $this->userSearch->status = UserSearch::STATUS_COMPLETE;
                 $this->userSearch->save();
-                Log::info('inside handle');
             }
         } catch (\Exception $exception) {
-            Log::info('UserSearchRepetation hande method');
             Log::info($exception->getMessage());
         }
     }
