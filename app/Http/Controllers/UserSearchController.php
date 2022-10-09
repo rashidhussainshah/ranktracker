@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\UserSearchRepetation;
+use App\Jobs\UserSearchRepetition;
 use App\Models\SearchIteration;
 use App\Models\UserSearch;
 use App\Models\UserSearchKeyword;
@@ -41,9 +41,9 @@ class UserSearchController extends VoyagerBaseController
 
         event(new BreadDataAdded($dataType, $data));
         // with queue
-//        dispatch(new UserSearchRepetation($data));
+        dispatch(new UserSearchRepetition($data));
         // without queue
-        $this->saveUserSearchApiRes($data);
+//        $this->saveUserSearchApiRes($data);
 
 
         if (!$request->has('_tagging')) {
