@@ -41,9 +41,9 @@ class UserSearchController extends VoyagerBaseController
 
         event(new BreadDataAdded($dataType, $data));
         // with queue
-        dispatch(new UserSearchRepetition($data));
+//        dispatch(new UserSearchRepetition($data));
         // without queue
-//        $this->saveUserSearchApiRes($data);
+        $this->saveUserSearchApiRes($data);
 
 
         if (!$request->has('_tagging')) {
