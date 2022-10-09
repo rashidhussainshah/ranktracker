@@ -33,16 +33,7 @@ class UserSearch extends Model
     }
 
     /**
-     * Relationship.
      *
-     * @return void
-     */
-    public function searchResults(): HasMany
-    {
-        return $this->hasMany(UserSearchKeywordResult::class, 'user_search_id');
-    }
-
-    /**
      * @return HasMany
      **/
     public function searchIterations(): HasMany

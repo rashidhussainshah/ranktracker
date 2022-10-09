@@ -34,7 +34,7 @@ class BaseDFSO
 
     public function __construct()
     {
-        $this->baseUrl = (config('dataforseo.mod') == 'sandbox') ? config('dataforseo.sandbox_host') : config('dataforseo.live_host');
+        $this->baseUrl = (config('dataforseo.MOD') == 'sandbox') ? config('dataforseo.sandbox_host') : config('dataforseo.live_host');
         $this->version = config('dataforseo.version');
         $this->client = new Client();
         $this->headers = [

@@ -8,11 +8,6 @@ use Illuminate\Support\Facades\Log;
 
 class DataForSEO extends BaseDFSO
 {
-    public function authentication()
-    {
-
-    }
-
     public function searchKeywords($keyword, $country)
     {
         try {

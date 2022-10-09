@@ -9,8 +9,12 @@ use App\Models\UserSearchKeyword;
 use App\Services\DataForSEO;
 use Carbon\Carbon;
 use Facade\FlareClient\Report;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,8 +27,9 @@ class UserSearchController extends VoyagerBaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @return JsonResponse|RedirectResponse
+     * @throws AuthorizationException
      */
     public function store(Request $request)
     {
@@ -40,11 +45,12 @@ class UserSearchController extends VoyagerBaseController
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         event(new BreadDataAdded($dataType, $data));
-        // with queue
-//        dispatch(new UserSearchRepetition($data));
-        // without queue
-        $this->saveUserSearchApiRes($data);
-
+        // save DataForSEO results
+        if ((config('dataforseo.ENABLE_QUEUE') == 'yes')) {
+            dispatch(new UserSearchRepetition($data));
+        } else {
+            $this->saveUserSearchApiRes($data);
+        }
 
         if (!$request->has('_tagging')) {
             if (auth()->user()->can('browse', $data)) {
@@ -75,6 +81,12 @@ class UserSearchController extends VoyagerBaseController
     //
     //****************************************
 
+    /**
+     * @param Request $request
+     * @param $id
+     * @return mixed
+     * @throws AuthorizationException
+     */
     public function show(Request $request, $id)
     {
         $slug = $this->getSlug($request);
@@ -122,12 +134,12 @@ class UserSearchController extends VoyagerBaseController
         if (view()->exists("voyager::$slug.read")) {
             $view = "voyager::$slug.read";
         }
-        //
+
+        // DataForSEO Graph and Table Data Preparation
         $us = UserSearch::find($dataTypeContent->id);
         $iterations = $us->searchIterations()->orderBy('updated_at', 'desc')->get();
         $data = [];
         $count = [];
-        $labels = [];
         $total = $iterations->count();
         $completed = $iterations->where('search_results', '!=', null)->count();
 
@@ -135,11 +147,8 @@ class UserSearchController extends VoyagerBaseController
             if (!is_null($iteration->search_results)) {
                 $searchResults = json_decode($iteration->search_results, true);
                 $items = $searchResults['tasks'][0]['result'][0]['items'];
-//                $items = $searchResults['result'][0]['items'];
                 $data = array_merge($data, $items);
-
                 $count[] =  $iteration->iteration;
-
             }
         }
         $graphData = [];
@@ -166,9 +175,8 @@ class UserSearchController extends VoyagerBaseController
                 'borderColor' => $color,
                 'backgroundColor' => $color
             ];
-            $labels[] = $group[0]['url'];
 
-            foreach ($iterations as $index => $iteration) {
+            foreach ($iterations as $iteration) {
                 if (!is_null($iteration->search_results)) {
                     $searchResults = json_decode($iteration->search_results, true);
                     $items = collect($searchResults['tasks'][0]['result'][0]['items'])->where('url', $site);
@@ -184,14 +192,12 @@ class UserSearchController extends VoyagerBaseController
                             'y' => $item['rank_group']
                         ];
                         $rank[] = $item['rank_group'];
-//                        $tableData[$site]['url'][] = $item['url'];
                     }
                 }
             }
             $graphData[] = $data;
         }
 
-//        dump($graphData);
         // Box plot prepare data
         foreach ($tableData as $url => $url_data) {
             $url_data['ranks']=   array_map(static function (string $value): string {
@@ -218,6 +224,11 @@ class UserSearchController extends VoyagerBaseController
         return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'isSoftDeleted'))->with(['id' => $us->id, 'graphData' => ['labels' => $count, 'datasets' => $graphData], 'tableData' => $tableData, 'total' => $total, 'completed' => $completed, 'boxpot_data' => $boxplot_data, 'boxpot_data_labels' => $boxplot_data_label, 'boxplot_cj_data'=>$boxplot_cj_data_arr]);;
     }
 
+    /**
+     * Save User Search DataForSEO API Response
+     * @param $userSearch
+     * @return void
+     */
     private function saveUserSearchApiRes($userSearch)
     {
         try {
@@ -235,10 +246,8 @@ class UserSearchController extends VoyagerBaseController
                 }
                 $userSearch->status = UserSearch::STATUS_COMPLETE;
                 $userSearch->save();
-                Log::info('inside handle');
             }
         } catch (\Exception $exception) {
-            Log::info('UserSearchRepetation hande method');
             Log::info($exception->getMessage());
         }
     }
