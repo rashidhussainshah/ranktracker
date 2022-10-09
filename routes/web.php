@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 
-Route::permanentRedirect('/', 'admin/login');
+//Route::permanentRedirect('/', 'admin/login');
 
 Route::group(['prefix' => 'admin'], function () {
     Voyager::routes();
